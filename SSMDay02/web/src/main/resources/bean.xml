@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context" xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd">
+    <context:component-scan base-package="com.ssm.service"></context:component-scan>
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.ssm.dao"></property>
+    </bean>
+    <context:property-placeholder location="classpath:jdbc.properties"></context:property-placeholder>
+    <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+        <property name="driverClassName" value="${jdbc.driver}"></property>
+        <property name="url" value="${jdbc.url}"></property>
+        <property name="username" value="${jdbc.username}"></property>
+        <property name="password" value="${jdbc.password}"></property>
+    </bean>
+    <bean class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource"></property>
+        <property name="plugins">
+            <array>
+                <bean class="com.github.pagehelper.PageInterceptor">
+                    <property name="properties">
+                        <value>
+                            helperDialect=mysql
+                            reasonable=true
+                        </value>
+                    </property>
+                </bean>
+            </array>
+        </property>
+    </bean>
+
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"></property>
+    </bean>
+    <tx:annotation-driven></tx:annotation-driven>
+    <import resource="classpath:spring-security.xml"></import>
+
+    <!--配置Lucene-->
+        <!--IK分词器-->
+    <bean id="ikAnalyzer" class="org.wltea.analyzer.lucene.IKAnalyzer"></bean>
+        <!--配置索引库路径-->
+    <bean id="file" class="java.io.File">
+        <constructor-arg value="D:\Lucene"></constructor-arg>
+    </bean>
+    <bean id="directory" class="org.apache.lucene.store.SimpleFSDirectory">
+        <constructor-arg name="path" ref="file"></constructor-arg>
+    </bean>
+        <!--配置索引库构建配置-->
+    <bean id="indexWriterConfig" class="org.apache.lucene.index.IndexWriterConfig">
+        <constructor-arg name="matchVersion" value="LUCENE_4_10_3"></constructor-arg>
+        <constructor-arg name="analyzer" ref="ikAnalyzer"></constructor-arg>
+    </bean>
+        <!--创建索引库-->
+    <bean id="indexWriter" class="org.apache.lucene.index.IndexWriter">
+        <constructor-arg name="conf" ref="indexWriterConfig"></constructor-arg>
+        <constructor-arg name="d" ref="directory"></constructor-arg>
+    </bean>
+</beans>
